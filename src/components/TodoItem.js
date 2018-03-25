@@ -6,36 +6,60 @@ import {
   TouchableOpacity
 } from 'react-native'
 
+import { Icon } from 'native-base'
+
 export default class TodoItem extends Component {
 
-  state = {
-    completed: false
+  toggleTodo = () => {
+    this.props.updateTodo(
+      this.props.item.id,
+      !this.props.item.completed
+    )
   }
 
-  toggleTodo = () => {
-    this.setState({completed: !this.state.completed})
+  deleteTodo = () => {
+    this.props.deleteTodo(
+      this.props.item.id
+    )
   }
 
   render () {
+    const item = this.props.item
+
     return (
       <TouchableOpacity
         onPress={this.toggleTodo}
         style={styles.itemButton}
       >
+        <Icon name={item.completed ? 'checkmark-circle' : 'radio-button-off'}/>
         <Text style={[styles.item, {
-          opacity: (this.state.completed ? 0.5 : 1.0),
-          textDecorationLine: (this.state.completed ? 'line-through' : 'none')
-        }]}>{this.props.title}</Text>
+          opacity: (item.completed ? 0.5 : 1.0),
+          textDecorationLine: (item.completed ? 'line-through' : 'none')
+        }]}>
+          {item.task}
+        </Text>
+        <TouchableOpacity
+          onPress={this.deleteTodo}
+        >
+          <Icon name="trash" style={{
+            color: 'red',
+            paddingRight: 10
+          }}/>
+        </TouchableOpacity>
       </TouchableOpacity>)
   }
 }
 
 const styles = StyleSheet.create({
   item: {
-    padding: 20
+    padding: 20,
+    flex: 1
   },
   itemButton: {
     borderBottomWidth: 1,
-    borderColor: '#ccc'
+    borderColor: '#ccc',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 10
   }
 })

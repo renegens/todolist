@@ -4,38 +4,82 @@ import {
   Text,
   View,
   FlatList,
-  StatusBar
+  StatusBar,
+  ActivityIndicator,
+  Image,
 } from 'react-native'
 
-import { Button, Text as NBText } from 'native-base'
-
+import { Button, Text as NBText, Segment } from 'native-base'
 import TodoItem from './TodoItem'
+import CheckImage from '../images/check.png'
+import { items } from '../lib/api'
 
 export default class ToDoList extends Component {
 
   static navigationOptions = {
-    header: null
+    header: null,
+    tabBarIcon: ({tintColor}) => (
+      <Image
+        style={[styles.icon, {tintColor}]}
+        source={CheckImage}/>
+    ),
+    tabBarLabel: 'List'
+  }
+
+  state = {
+    items: null,
+    filter: 'All'
+  }
+
+  componentDidMount () {
+    items('GET')
+      .then(items => {
+        this.setState({
+          items: items
+        })
+      })
   }
 
   addItem = () => {
     this.props.navigation.navigate(
       'AddTodo',
-      { saveItem: this.saveItem }
-    );
+      {saveItem: this.saveItem}
+    )
   }
 
-  saveItem = (newTask) => {
-    this.setState({
-      items: [...this.state.items, newTask]
-    })
+  saveItem = newTask => {
+    items('POST', {task: newTask})
+      .then(json => {
+        this.setState({items: json})
+      })
   }
 
-  state = {
-    items: [
-      '1. Go to the store',
-      '2. Get Milk',
-      '3. Bring it back'
-    ]
+  updateTodo = (id, completed) => {
+    items('PUT', {id, completed})
+      .then(json => {
+        this.setState({items: json})
+      })
+  }
+
+  deleteTodo = (id) => {
+    items('DELETE', {id})
+      .then(json => {
+        this.setState({items: json})
+      })
+  }
+
+  filterdItems = () => {
+    if (this.state.filter === 'Todo') {
+      return this.state.items.filter(item => {
+        return !item.completed
+      })
+    }
+    if (this.state.filter === 'Complete') {
+      return this.state.items.filter(item => {
+        return item.completed
+      })
+    }
+    return this.state.items
   }
 
   render () {
@@ -52,16 +96,49 @@ export default class ToDoList extends Component {
         <View style={styles.contentWrapper}>
 
           <View style={styles.contentHeader}>
-            <Text>Content Header</Text>
+            <Segment style={{backgroundColor: '#fff'}}>
+              <Button
+                first={true}
+                active={this.state.filter === 'All'}
+                onPress={() => this.setState({filter: 'All'})}
+              >
+                <NBText>All</NBText>
+              </Button>
+              <Button
+                active={this.state.filter === 'Todo'}
+                onPress={() => this.setState({filter: 'Todo'})}
+              >
+                <NBText>Todo</NBText>
+              </Button>
+              <Button
+                last={true}
+                active={this.state.filter === 'Complete'}
+                onPress={() => this.setState({filter: 'Complete'})}
+              >
+                <NBText>Completed</NBText>
+              </Button>
+            </Segment>
           </View>
 
+          {
+            !this.state.items && <ActivityIndicator
+              size="large"
+              color="#2288ee"
+              style={{marginTop: 20}}
+            />
+          }
+
           <FlatList
-            data={this.state.items}
+            data={this.filterdItems()}
             style={styles.content}
-            renderItem={(row) => {
-              return <TodoItem title={row.item}/>
+            renderItem={row => {
+              return <TodoItem
+                item={row.item}
+                updateTodo={this.updateTodo}
+                deleteTodo={this.deleteTodo}
+              />
             }}
-            keyExtractor={item => item}
+            keyExtractor={item => item.id}
           />
 
           <View style={styles.contentFooter}>
@@ -113,5 +190,9 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'flex-end',
     flexDirection: 'row'
+  },
+  icon: {
+    height: 24,
+    resizeMode: 'contain'
   }
 })

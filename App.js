@@ -26,7 +26,8 @@ const TabNav = TabNavigator({
   tabBarPosition: 'bottom',
   tabBarOptions: {
     activeTintColor: '#0066cc'
-  }
+  },
+  ...TabNavigator.Presets.iOSBottomTabs
 })
 
 export default class App extends Component<{}> {
